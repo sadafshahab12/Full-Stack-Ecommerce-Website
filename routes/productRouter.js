@@ -1,14 +1,45 @@
 import express, { Router } from "express";
 import Product from "../models/productSchema.js";
-import { body } from "express-validator";
+import { body, validationResult } from "express-validator";
 
 const productRouter = express.Router();
 const productValidation = [
-  body("name").notEmpty().withMessage("Name is required")
-]
+  body("name")
+    .notEmpty()
+    .withMessage("Name is required")
+    .isLength({ min: 5 })
+    .withMessage("Name must be at least 3 characters"),
+  body("price")
+    .notEmpty()
+    .withMessage("Price is required")
+    .isFloat({ min: 0 })
+    .withMessage("Price must be a positive number"),
+  body("description")
+    .notEmpty()
+    .withMessage("Description is required")
+    .isLength({ min: 30 })
+    .withMessage("Description must be at least 10 characters"),
+  body("category")
+    .notEmpty()
+    .withMessage("Category is required")
+    .isIn(["book", "template", "tshirt", "digital", "other"])
+    .withMessage("Invalid category"),
+  body("imageUrl")
+    .notEmpty()
+    .withMessage("Image URL is required")
+    .isURL()
+    .withMessage("Must be a valid URL"),
+];
 // creating product
-productRouter.post("/", async (req, res, next) => {
+productRouter.post("/", productValidation, async (req, res, next) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        error: errors.array().map((err) => err.msg),
+      });
+    }
     const product = new Product(req.body); //  all data required for creating product will receive krom req.body
     await product.save();
     res.status(201).json({ success: true, product });

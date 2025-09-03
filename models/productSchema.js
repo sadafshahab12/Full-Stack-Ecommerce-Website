@@ -8,6 +8,8 @@ const productSchema = new mongoose.Schema(
     },
     price: {
       type: Number,
+      default: 0,
+      required: [0, "Price must be a positive number"],
     },
     description: {
       type: String,
