@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 const Register = () => {
   const [form, setForm] = useState({ username: "", email: "", password: "" });
+
+  const navigate = useNavigate();
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -12,6 +16,7 @@ const Register = () => {
         `${import.meta.env.VITE_BACKEND_BASE_URL}/api/auth/register`,
         form
       );
+      navigate("/login");
       alert("User registered Successfully");
     } catch (error) {
       alert(error.response?.data?.message || "Error");
