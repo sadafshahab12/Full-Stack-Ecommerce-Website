@@ -40,6 +40,7 @@ authRouter.post("/register", async (req, res) => {
       message: "Registered. Please check your email for verification link.",
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -47,7 +48,7 @@ authRouter.post("/register", async (req, res) => {
 //verify email
 authRouter.get("/verify/:token", async (req, res) => {
   try {
-    const decoded = jwt.verify(req.params.token, process.env, JWT_SECRET);
+    const decoded = jwt.verify(req.params.token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
     if (!user) return res.status(400).json({ message: "Invalid Token" });
     user.isVerified = true;
@@ -55,6 +56,7 @@ authRouter.get("/verify/:token", async (req, res) => {
     await user.save();
     res.json({ message: "Email verified Successfully!" });
   } catch (error) {
+    console.error(error);
     res.status(400).json({ message: "Token expired or invalid" });
   }
 });
@@ -83,6 +85,7 @@ authRouter.post("/login", async (req, res) => {
       user: { id: user._id, username: user.username, email: user.email },
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -101,7 +104,7 @@ authRouter.post("/forgot-password", async (req, res) => {
 
   await user.save();
 
-  const resetLink = `${process.env.FRONT_END_URL}/api/auth/reset-password/${resetToken}`;
+  const resetLink = `${process.env.FRONT_END_URL}/reset-password/${resetToken}`;
   await transporter.sendMail({
     to: email,
     subject: "Reset Password",
@@ -118,14 +121,15 @@ authRouter.post("/reset-password/:token", async (req, res) => {
     if (!user) return res.status(400).json({ message: "Invalid token" });
     const salt = await bcrypt.genSalt(10);
 
-    const hashedPassowrd = await bcrypt.hash(req.body.password, salt);
-    user.password = hashedPassowrd;
+    const hashedPassword = await bcrypt.hash(req.body.password, salt);
+    user.password = hashedPassword;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
     await user.save();
 
     res.json({ message: "Password reset successful." });
   } catch (error) {
+    console.error(error);
     res.status(400).json({ message: "Token expired or invalid." });
   }
 });
@@ -144,7 +148,7 @@ authRouter.post("/resend-verification", async (req, res) => {
   user.verificationToken = token;
   await user.save();
 
-  const verifyLink = `${process.env.FRONT_END_URL}/api/auth/verify/${token}`;
+  const verifyLink = `${process.env.FRONT_END_URL}/verify/${token}`;
   await transporter.sendMail({
     to: email,
     subject: "Resend Verification",
